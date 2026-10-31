@@ -1,4 +1,4 @@
-﻿import 'dart:math' as math;
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_theme.dart';
@@ -80,9 +80,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ? career['title'] as String
         : 'UI/UX Designer';
 
-    final primaryAction = !hasAssessment
-        ? _openAssessment
-        : () => _showAiRecommendationsModal(context, careerTitle, skills);
+    final primaryAction = () =>
+        _showAiRecommendationsModal(context, careerTitle, skills);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),

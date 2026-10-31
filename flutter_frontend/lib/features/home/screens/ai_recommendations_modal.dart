@@ -7,19 +7,34 @@ extension _DashboardAiRecommendationsModal on _DashboardScreenState {
     String careerTitle,
     List<dynamic> skills,
   ) {
+    // Siapkan data fallback secara instan sebelum modal dibuka agar tidak pernah berputar tanpa henti
+    _explanationData ??= _buildFallbackExplanations();
+    _isExplaining = false;
+    _explanationError = null;
+
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
+        bool requestedUpgrade = false;
         return StatefulBuilder(
           builder: (modalContext, setModalState) {
-            if (_explanationData == null &&
-                !_isExplaining &&
-                _explanationError == null) {
-              _explainGaps(() {
-                if (modalContext.mounted) {
-                  setModalState(() {});
+            if (!requestedUpgrade) {
+              requestedUpgrade = true;
+              Future.microtask(() async {
+                try {
+                  final fresh = await widget.apiClient
+                      .explainSkillGaps()
+                      .timeout(const Duration(seconds: 6));
+                  if (mounted) {
+                    setState(() => _explanationData = fresh);
+                  }
+                  if (modalContext.mounted) {
+                    setModalState(() {});
+                  }
+                } catch (_) {
+                  // Tetap gunakan fallback instan jika server/OpenAI lambat
                 }
               });
             }
@@ -368,8 +383,11 @@ extension _DashboardAiRecommendationsModal on _DashboardScreenState {
         ...skillList.map((item) {
           final skillMap = Map<String, dynamic>.from(item['skill'] as Map? ?? {});
           final name = (skillMap['name'] as String?) ?? 'Skill';
+          final cur = (item['current_level'] as num?)?.toDouble() ?? 2.0;
+          final tgt = (item['target_level'] as num?)?.toDouble() ?? 4.0;
           final gap = (item['gap'] as num?)?.toInt() ?? 0;
-          final pct = (item['percentage'] as num?)?.toInt() ?? 0;
+          final pct = (item['percentage'] as num?)?.toInt() ??
+              (tgt > 0 ? ((cur / tgt) * 100).round().clamp(0, 100) : 70);
           final explanation = (item['explanation'] as String?) ?? '';
           final nextAction = (item['suggested_next_action'] as String?) ?? '';
           final isGap = gap > 0 || pct < 80;

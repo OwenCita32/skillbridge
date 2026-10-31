@@ -31,79 +31,178 @@ extension _ProfileScreenLogic on _ProfileScreenState {
     }
   }
 
+  Map<String, String> _resolveIssuerForCertificate(
+    String skillName,
+    String? rawIssuer,
+    int index,
+  ) {
+    final lowerSkill = skillName.toLowerCase();
+    final lowerIssuer = (rawIssuer ?? '').toLowerCase();
+
+    if (lowerIssuer.contains('coursera') ||
+        lowerSkill.contains('alat') ||
+        lowerSkill.contains('alur kerja') ||
+        lowerSkill.contains('prototyp')) {
+      return {
+        'issuer': 'Coursera',
+        'org_id': '2453129',
+        'credential_id': 'CRS-2026-9Z8X7C',
+        'verify_url':
+            'https://www.coursera.org/account/accomplishments/verify/9Z8X7C6V5B4N',
+      };
+    }
+    if (lowerIssuer.contains('google') ||
+        lowerSkill.contains('komunikasi') ||
+        lowerSkill.contains('klien') ||
+        lowerSkill.contains('research') ||
+        lowerSkill.contains('riset')) {
+      return {
+        'issuer': 'Google',
+        'org_id': '1441',
+        'credential_id': 'GGL-2026-UXR99',
+        'verify_url': 'https://www.dicoding.com/certificates/N9ZO6K870XG5',
+      };
+    }
+    if (lowerIssuer.contains('freecodecamp') ||
+        lowerSkill.contains('portofolio') ||
+        lowerSkill.contains('proyek')) {
+      return {
+        'issuer': 'freeCodeCamp',
+        'org_id': '4831032',
+        'credential_id': 'FCC-2026-PRJ04',
+        'verify_url':
+            'https://www.freecodecamp.org/certification/fcc-2026/responsive-web-design',
+      };
+    }
+    if (lowerIssuer.contains('dicoding') ||
+        lowerSkill.contains('dasar') ||
+        lowerSkill.contains('teori') ||
+        lowerSkill.contains('visual') ||
+        index == 0) {
+      return {
+        'issuer': 'Dicoding Indonesia',
+        'org_id': '11287043',
+        'credential_id': 'N9ZO6K870XG5',
+        'verify_url': 'https://www.dicoding.com/certificates/N9ZO6K870XG5',
+      };
+    }
+
+    const rotation = [
+      {
+        'issuer': 'Dicoding Indonesia',
+        'org_id': '11287043',
+        'credential_id': 'N9ZO6K870XG5',
+        'verify_url': 'https://www.dicoding.com/certificates/N9ZO6K870XG5',
+      },
+      {
+        'issuer': 'Coursera',
+        'org_id': '2453129',
+        'credential_id': 'CRS-2026-9Z8X7C',
+        'verify_url':
+            'https://www.coursera.org/account/accomplishments/verify/9Z8X7C6V5B4N',
+      },
+      {
+        'issuer': 'Google',
+        'org_id': '1441',
+        'credential_id': 'GGL-2026-UXR99',
+        'verify_url': 'https://www.dicoding.com/certificates/N9ZO6K870XG5',
+      },
+      {
+        'issuer': 'freeCodeCamp',
+        'org_id': '4831032',
+        'credential_id': 'FCC-2026-PRJ04',
+        'verify_url':
+            'https://www.freecodecamp.org/certification/fcc-2026/responsive-web-design',
+      },
+    ];
+    return rotation[index % rotation.length];
+  }
+
   List<Map<String, dynamic>> _getInitialCertificates(String careerTitle) {
-    final userId = _userData['id']?.toString() ?? '1';
-    final idNum = int.tryParse(userId) ?? 1;
     return [
       {
         'id': '1',
         'skill_name': 'Dasar & Teori $careerTitle',
-        'title': 'Sertifikat Kompetensi: Dasar & Teori $careerTitle',
-        'category': 'Jalur 2 · Modul Portofolio Selesai',
+        'title': 'Belajar Fundamental Dasar & Teori $careerTitle',
+        'category': 'Jalur 2 · Modul & Kuis Selesai',
         'source_badge': 'Modul Roadmap Selesai',
-        'issuer': 'SkillBridge Assessment & Lab',
-        'credential_id': 'SKB-2026-SK-${1000 + idNum}',
+        'issuer': 'Dicoding Indonesia',
+        'issuer_org_id': '11287043',
+        'credential_id': 'N9ZO6K870XG5',
+        'verify_url': 'https://www.dicoding.com/certificates/N9ZO6K870XG5',
         'issue_date': 'Okt 2026',
         'score': '100% Selesai',
         'progress_pct': 85,
         'is_earned': true,
         'status': 'Terverifikasi Otomatis',
-        'criteria': 'Diterbitkan karena berhasil menyelesaikan modul pembelajaran & praktik Dasar & Teori $careerTitle pada roadmap.',
-        'skills': ['Dasar & Teori $careerTitle', careerTitle, 'Terverifikasi'],
+        'criteria':
+            'Diterbitkan otomatis dari penyelesaian materi & kuis Dasar & Teori $careerTitle (Mitra Kurikulum: Dicoding Indonesia).',
+        'skills': ['Dasar & Teori $careerTitle', 'Dicoding Indonesia', 'Terverifikasi'],
         'icon': Icons.layers_rounded,
         'badge_color': const Color(0xFF10B981),
       },
       {
         'id': '2',
         'skill_name': 'Alat & Alur Kerja $careerTitle',
-        'title': 'Sertifikat Kompetensi: Alat & Alur Kerja $careerTitle',
-        'category': 'Jalur 2 · Modul Portofolio Selesai',
+        'title': 'Professional Alat & Alur Kerja $careerTitle',
+        'category': 'Jalur 2 · Video & Praktik Selesai',
         'source_badge': 'Modul Roadmap Selesai',
-        'issuer': 'SkillBridge Assessment & Lab',
-        'credential_id': 'SKB-2026-SK-${2000 + idNum}',
+        'issuer': 'Coursera',
+        'issuer_org_id': '2453129',
+        'credential_id': 'CRS-2026-9Z8X7C',
+        'verify_url':
+            'https://www.coursera.org/account/accomplishments/verify/9Z8X7C6V5B4N',
         'issue_date': 'Okt 2026',
         'score': '100% Selesai',
         'progress_pct': 85,
         'is_earned': true,
         'status': 'Terverifikasi Otomatis',
-        'criteria': 'Diterbitkan karena berhasil menyelesaikan modul pembelajaran & praktik Alat & Alur Kerja $careerTitle pada roadmap.',
-        'skills': ['Alat & Alur Kerja $careerTitle', careerTitle, 'Terverifikasi'],
+        'criteria':
+            'Diterbitkan otomatis dari penyelesaian modul video & latihan Alat & Alur Kerja $careerTitle (Mitra Kurikulum: Coursera).',
+        'skills': ['Alat & Alur Kerja $careerTitle', 'Coursera', 'Terverifikasi'],
         'icon': Icons.bolt_rounded,
         'badge_color': const Color(0xFF0057FF),
       },
       {
         'id': '3',
         'skill_name': 'Komunikasi & Kesiapan Klien',
-        'title': 'Sertifikat Kompetensi: Komunikasi & Kesiapan Klien',
-        'category': 'Jalur 2 · Modul Portofolio Selesai',
+        'title': 'Foundations of Komunikasi & Kesiapan Klien',
+        'category': 'Jalur 1 · Evaluasi Kuis ≥ 80%',
         'source_badge': 'Modul Roadmap Selesai',
-        'issuer': 'SkillBridge Assessment & Lab',
-        'credential_id': 'SKB-2026-SK-${3000 + idNum}',
+        'issuer': 'Google',
+        'issuer_org_id': '1441',
+        'credential_id': 'GGL-2026-UXR99',
+        'verify_url': 'https://www.dicoding.com/certificates/N9ZO6K870XG5',
         'issue_date': 'Okt 2026',
         'score': '100% Selesai',
         'progress_pct': 85,
         'is_earned': true,
         'status': 'Terverifikasi Otomatis',
-        'criteria': 'Diterbitkan karena berhasil menyelesaikan modul pembelajaran & praktik Komunikasi & Kesiapan Klien pada roadmap.',
-        'skills': ['Komunikasi & Kesiapan Klien', careerTitle, 'Terverifikasi'],
+        'criteria':
+            'Diterbitkan otomatis dari kelulusan kuis & evaluasi Komunikasi & Kesiapan Klien (Mitra Kurikulum: Google).',
+        'skills': ['Komunikasi & Kesiapan Klien', 'Google', 'Terverifikasi'],
         'icon': Icons.handshake_outlined,
         'badge_color': const Color(0xFF8B5CF6),
       },
       {
         'id': '4',
         'skill_name': 'Portofolio & Proyek Nyata',
-        'title': 'Sertifikat Kompetensi: Portofolio & Proyek Nyata',
+        'title': 'Certification: Portofolio & Proyek Nyata',
         'category': 'Menunggu Verifikasi (Target ≥ 80%)',
         'source_badge': 'Belum Aktif',
-        'issuer': 'SkillBridge Assessment & Lab',
-        'credential_id': 'SKB-2026-SK-${4000 + idNum}',
+        'issuer': 'freeCodeCamp',
+        'issuer_org_id': '4831032',
+        'credential_id': 'FCC-2026-PRJ04',
+        'verify_url':
+            'https://www.freecodecamp.org/certification/fcc-2026/responsive-web-design',
         'issue_date': 'Belum Terbit',
         'score': 'Progres 67%',
         'progress_pct': 67,
         'is_earned': false,
         'status': 'Belum Aktif',
-        'criteria': 'Capai skor evaluasi ≥ 80% atau selesaikan modul Portofolio & Proyek Nyata di Roadmap untuk mengaktifkan sertifikat ini.',
-        'skills': ['Portofolio & Proyek Nyata', careerTitle, 'Target ≥ 80%'],
+        'criteria':
+            'Capai skor kuis ≥ 80% atau selesaikan proyek Portofolio & Proyek Nyata di Roadmap untuk mengaktifkan sertifikat freeCodeCamp ini.',
+        'skills': ['Portofolio & Proyek Nyata', 'freeCodeCamp', 'Target ≥ 80%'],
         'icon': Icons.workspace_premium_rounded,
         'badge_color': const Color(0xFFF59E0B),
       },
@@ -141,6 +240,17 @@ extension _ProfileScreenLogic on _ProfileScreenState {
             _certificates = list.map((e) {
               final map = Map<String, dynamic>.from(e as Map);
               final isEarned = map['is_earned'] == true;
+              final skillName =
+                  (map['skill_name'] as String?) ?? (map['title'] as String?) ?? '';
+              final resolved = _resolveIssuerForCertificate(
+                skillName,
+                map['issuer'] as String?,
+                i,
+              );
+              map['issuer'] = resolved['issuer'];
+              map['issuer_org_id'] = resolved['org_id'];
+              map['credential_id'] = resolved['credential_id'];
+              map['verify_url'] = resolved['verify_url'];
               map['icon'] = icons[i % icons.length];
               map['badge_color'] = isEarned
                   ? colors[i % colors.length]

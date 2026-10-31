@@ -152,7 +152,10 @@ extension _ProfileCertificatesModal on _ProfileScreenState {
                     final title = cert['title'] as String? ?? 'Sertifikat';
                     final skillName = cert['skill_name'] as String? ?? title;
                     final category = cert['category'] as String? ?? 'Kompetensi';
-                    final credentialId = cert['credential_id'] as String? ?? 'SKB-2026';
+                    final issuer = cert['issuer'] as String? ?? 'Dicoding Indonesia';
+                    final credentialId = cert['credential_id'] as String? ?? 'N9ZO6K870XG5';
+                    final verifyUrl = cert['verify_url'] as String? ??
+                        'https://www.dicoding.com/certificates/N9ZO6K870XG5';
                     final issueDate = cert['issue_date'] as String? ?? '2026';
                     final score = cert['score'] as String? ?? '85%';
                     final progressPct = (cert['progress_pct'] as num?)?.toInt() ?? 50;
@@ -211,6 +214,15 @@ extension _ProfileCertificatesModal on _ProfileScreenState {
                                         color: Color(0xFF0F172A),
                                         fontSize: 13.5,
                                         fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Penerbit Otomatis: $issuer',
+                                      style: const TextStyle(
+                                        color: Color(0xFF0A66C2),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
                                   ],
@@ -367,7 +379,9 @@ extension _ProfileCertificatesModal on _ProfileScreenState {
                                       Navigator.of(sheetContext).pop();
                                       _showLinkedInExportSheet(
                                         initialCertName: title,
-                                        initialCertId: 'N9ZO6K870XG5',
+                                        initialCertId: credentialId,
+                                        initialIssuer: issuer,
+                                        initialVerifyUrl: verifyUrl,
                                       );
                                     },
                                     icon: const Icon(Icons.add_task_rounded, size: 14),

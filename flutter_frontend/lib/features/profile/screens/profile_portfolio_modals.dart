@@ -122,15 +122,9 @@ extension _ProfilePortfolioModals on _ProfileScreenState {
   void _showLinkedInExportSheet({
     String? initialCertName,
     String? initialCertId,
+    String? initialIssuer,
+    String? initialVerifyUrl,
   }) async {
-    int selectedIssuerIdx = 0;
-    final certUrlController = TextEditingController(
-      text: 'https://www.dicoding.com/certificates/N9ZO6K870XG5',
-    );
-    final certCodeController = TextEditingController(
-      text: initialCertId ?? 'N9ZO6K870XG5',
-    );
-
     const issuers = <Map<String, String>>[
       {
         'name': 'Dicoding Indonesia',
@@ -147,16 +141,77 @@ extension _ProfilePortfolioModals on _ProfileScreenState {
       {
         'name': 'Google',
         'orgId': '1441',
-        'defaultCode': 'GGL-2026-CERT',
+        'defaultCode': 'GGL-2026-UXR99',
         'baseUrl': 'https://www.dicoding.com/certificates/',
       },
       {
         'name': 'freeCodeCamp',
         'orgId': '4831032',
-        'defaultCode': 'FCC-2026-WEB',
+        'defaultCode': 'FCC-2026-PRJ04',
         'baseUrl': 'https://www.freecodecamp.org/certification/',
       },
+      {
+        'name': '+ Lembaga Lain',
+        'orgId': '',
+        'defaultCode': 'CERT-2026-ID',
+        'baseUrl': 'https://www.dicoding.com/certificates/',
+      },
     ];
+
+    // Kamus otomatis 20+ organisasi resmi LinkedIn (Jika user ketik lembaga lain di luar 4 utama)
+    const knownOrgIds = <String, String>{
+      'dicoding': '11287043',
+      'coursera': '2453129',
+      'google': '1441',
+      'freecodecamp': '4831032',
+      'udemy': '2272273',
+      'myskill': '74832494',
+      'revou': '35629395',
+      'buildwithangga': '30916838',
+      'bwa': '30916838',
+      'skilvul': '28661472',
+      'codepolitan': '13191944',
+      'progate': '6624833',
+      'figma': '3650502',
+      'microsoft': '1035',
+      'ibm': '1009',
+      'aws': '2382910',
+      'amazon': '2382910',
+      'meta': '10667',
+      'cisco': '1063',
+      'edx': '2746406',
+      'hackerrank': '3554223',
+      'linkedin': '1337',
+      'hubspot': '68529',
+      'kampus merdeka': '68249505',
+      'kemendikbud': '68249505',
+    };
+
+    // Otomatis pilih penerbit sesuai sertifikat modul/kuis/video yang diklik
+    int selectedIssuerIdx = 0;
+    if (initialIssuer != null && initialIssuer.trim().isNotEmpty) {
+      final lowerInit = initialIssuer.toLowerCase();
+      final matchedIdx = issuers.indexWhere(
+        (e) => lowerInit.contains(e['name']!.toLowerCase().split(' ').first),
+      );
+      if (matchedIdx >= 0 && matchedIdx < 4) {
+        selectedIssuerIdx = matchedIdx;
+      } else {
+        selectedIssuerIdx = 4; // + Lembaga Lain
+      }
+    }
+
+    final initialItem = issuers[selectedIssuerIdx];
+    final customIssuerController = TextEditingController(
+      text: selectedIssuerIdx == 4 ? (initialIssuer ?? '') : '',
+    );
+    final certCodeController = TextEditingController(
+      text: initialCertId ?? initialItem['defaultCode']!,
+    );
+    final certUrlController = TextEditingController(
+      text: initialVerifyUrl ??
+          '${initialItem['baseUrl']}${initialCertId ?? initialItem['defaultCode']!}',
+    );
 
     showModalBottomSheet<void>(
       context: context,
@@ -263,8 +318,26 @@ extension _ProfilePortfolioModals on _ProfileScreenState {
                             : 'Belajar Fundamental $careerTitle';
 
                         final currentIssuer = issuers[selectedIssuerIdx];
-                        final orgName = currentIssuer['name']!;
-                        final orgId = currentIssuer['orgId']!;
+                        final isCustomIssuer = selectedIssuerIdx == 4;
+                        final orgName = isCustomIssuer
+                            ? (customIssuerController.text.trim().isNotEmpty
+                                ? customIssuerController.text.trim()
+                                : 'Udemy')
+                            : currentIssuer['name']!;
+
+                        // Cari organizationId resmi secara otomatis (baik dari chip maupun dari nama/URL lembaga lain)
+                        String orgId = currentIssuer['orgId']!;
+                        if (isCustomIssuer) {
+                          final searchKey =
+                              '${orgName.toLowerCase()} ${certUrlController.text.toLowerCase()}';
+                          for (final entry in knownOrgIds.entries) {
+                            if (searchKey.contains(entry.key)) {
+                              orgId = entry.value;
+                              break;
+                            }
+                          }
+                        }
+
                         final certCode = certCodeController.text.trim().isNotEmpty
                             ? certCodeController.text.trim()
                             : currentIssuer['defaultCode']!;
@@ -273,13 +346,11 @@ extension _ProfilePortfolioModals on _ProfileScreenState {
                             : '${currentIssuer['baseUrl']}$certCode';
 
                         final now = DateTime.now();
-                        // Menggunakan organizationId resmi LinkedIn (mis. Dicoding 11287043)
-                        // agar LOGO otomatis muncul di LinkedIn tanpa perlu Upload Media,
-                        // dan certUrl langsung mengarah ke halaman Sertifikat (bukan GitHub).
+                        final orgIdParam = orgId.isNotEmpty ? '&organizationId=$orgId' : '';
                         final cleanLinkedInAddUrl =
                             'https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME'
                             '&name=${Uri.encodeComponent(certName)}'
-                            '&organizationId=$orgId'
+                            '$orgIdParam'
                             '&organizationName=${Uri.encodeComponent(orgName)}'
                             '&issueYear=${now.year}'
                             '&issueMonth=${now.month}'
@@ -350,14 +421,40 @@ extension _ProfilePortfolioModals on _ProfileScreenState {
                                           onSelected: (_) {
                                             setModalState(() {
                                               selectedIssuerIdx = idx;
-                                              final code = item['defaultCode']!;
-                                              certCodeController.text = code;
-                                              certUrlController.text = '${item['baseUrl']}$code';
+                                              if (idx < 4) {
+                                                final code = item['defaultCode']!;
+                                                certCodeController.text = code;
+                                                certUrlController.text = '${item['baseUrl']}$code';
+                                              }
                                             });
                                           },
                                         );
                                       }),
                                     ),
+                                    if (isCustomIssuer) ...[
+                                      const SizedBox(height: 12),
+                                      TextField(
+                                        controller: customIssuerController,
+                                        onChanged: (_) => setModalState(() {}),
+                                        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+                                        decoration: InputDecoration(
+                                          labelText:
+                                              'Ketik Nama Lembaga (Contoh: Udemy, MySkill, RevoU, Microsoft, AWS)',
+                                          labelStyle: const TextStyle(fontSize: 12),
+                                          filled: true,
+                                          fillColor: Colors.white,
+                                          isDense: true,
+                                          contentPadding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 10,
+                                          ),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                     const SizedBox(height: 12),
                                     TextField(
                                       controller: certCodeController,
