@@ -28,17 +28,34 @@ class QuizController extends Controller
             return response()->json(['message' => 'Pilih target karier terlebih dahulu.'], 400);
         }
 
-        // Find matching skill
+        // Find matching skill within the user's active career requirements
+        $careerSkillIds = $goal->career->skillRequirements->pluck('skill_id')->all();
         $skill = null;
-        if (!empty($validated['skill_id'])) {
+        if (!empty($validated['skill_id']) && in_array((int) $validated['skill_id'], $careerSkillIds, true)) {
             $skill = Skill::find($validated['skill_id']);
         } elseif (!empty($validated['skill_name'])) {
-            $skill = Skill::where('name', 'like', '%' . $validated['skill_name'] . '%')->first();
+            $skill = Skill::whereIn('id', $careerSkillIds)
+                ->where('name', 'like', '%' . $validated['skill_name'] . '%')
+                ->first();
         }
 
-        // Fallback to first skill if not found
+        // Fallback: pilih skill di karier ini yang masih belum mencapai target (gap terbesar)
         if (!$skill) {
-            $skill = $goal->career->skillRequirements->first()?->skill;
+            $latestAssessment = $user->assessments()
+                ->where('career_id', $goal->career_id)
+                ->with('skillAssessments')
+                ->orderByDesc('submitted_at')
+                ->first();
+            $answers = $latestAssessment?->skillAssessments->keyBy('skill_id') ?? collect();
+
+            $bestReq = $goal->career->skillRequirements
+                ->sortByDesc(function ($req) use ($answers): int {
+                    $cur = (int) ($answers->get($req->skill_id)?->level ?? 0);
+                    return (int) $req->target_level - $cur;
+                })
+                ->first();
+
+            $skill = $bestReq?->skill;
         }
 
         if (!$skill) {

@@ -1,10 +1,13 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../core/network/api_client.dart';
 import '../careers/career_selection_screen.dart';
 import '../home/dashboard_screen.dart';
 import '../profile/profile_screen.dart';
 import '../roadmap/roadmap_screen.dart';
+
+part 'controllers/app_shell_controller.dart';
+part 'widgets/floating_nav_destination.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({
@@ -29,28 +32,14 @@ class _AppShellState extends State<AppShell> {
   int _refreshKey = 0;
 
   @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+  }
+
+  @override
   void initState() {
     super.initState();
     _user = widget.user;
-  }
-
-  Future<void> _careerSelected(Map<String, dynamic> career) async {
-    setState(() {
-      _user = {
-        ..._user,
-        'career_goal': {
-          'career_id': career['id'],
-          'career_title': career['title'],
-        },
-      };
-      _isChoosingCareer = false;
-      _selectedIndex = 0;
-      _refreshKey++;
-    });
-  }
-
-  void _refreshHome() {
-    setState(() => _refreshKey++);
   }
 
   @override
@@ -75,6 +64,7 @@ class _AppShellState extends State<AppShell> {
           apiClient: widget.apiClient,
           user: _user,
           onOpenRoadmap: () => setState(() => _selectedIndex = 1),
+          onOpenProfile: () => setState(() => _selectedIndex = 2),
         ),
         1 => RoadmapScreen(
           key: ValueKey('roadmap-$_refreshKey'),
@@ -141,66 +131,6 @@ class _AppShellState extends State<AppShell> {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FloatingNavDestination extends StatelessWidget {
-  const _FloatingNavDestination({
-    required this.icon,
-    required this.selectedIcon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final IconData selectedIcon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFF0057FF) : Colors.transparent,
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFF0057FF).withValues(alpha: 0.28),
-                    blurRadius: 14,
-                    offset: const Offset(0, 5),
-                  ),
-                ]
-              : null,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              selected ? selectedIcon : icon,
-              size: 21,
-              color: selected ? Colors.white : const Color(0xFF64748B),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: TextStyle(
-                color: selected ? Colors.white : const Color(0xFF64748B),
-                fontSize: 11,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              ),
-            ),
-          ],
         ),
       ),
     );

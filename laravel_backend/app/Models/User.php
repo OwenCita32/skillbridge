@@ -60,6 +60,11 @@ class User extends Authenticatable
         return $this->hasMany(PortfolioSubmission::class);
     }
 
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(UserNotification::class);
+    }
+
     /**
      * Get the attributes that should be cast.
      *

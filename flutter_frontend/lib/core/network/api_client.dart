@@ -271,6 +271,19 @@ class ApiClient {
   Future<Map<String, dynamic>> getCertificates() =>
       _sendMap('GET', '/profile/certificates', authenticated: true);
 
+  // In-App Notifications
+  Future<Map<String, dynamic>> getNotifications() =>
+      _sendMap('GET', '/notifications', authenticated: true);
+
+  Future<Map<String, dynamic>> markNotificationAsRead(int id) =>
+      _sendMap('PATCH', '/notifications/$id/read', authenticated: true);
+
+  Future<Map<String, dynamic>> markAllNotificationsAsRead() =>
+      _sendMap('POST', '/notifications/read-all', authenticated: true);
+
+  Future<Map<String, dynamic>> deleteNotification(int id) =>
+      _sendMap('DELETE', '/notifications/$id', authenticated: true);
+
   // Forgot password without SMTP / vendor
   Future<Map<String, dynamic>> requestPasswordReset(String email) => _sendMap(
     'POST',
