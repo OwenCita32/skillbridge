@@ -1,4 +1,4 @@
-﻿part of '../profile_screen.dart';
+part of '../profile_screen.dart';
 
 extension _ProfilePortfolioModals on _ProfileScreenState {
   // 3. GITHUB IMPORT DIALOG
@@ -220,15 +220,140 @@ extension _ProfilePortfolioModals on _ProfileScreenState {
                           _buildExportOptionCard(
                             title: '🏅 Tambah Lisensi ke Profil LinkedIn',
                             subtitle:
-                                'Membuka form sertifikat LinkedIn dengan nama kompetensi & penerbit SkillBridge terisi otomatis.',
+                                'Membuka form sertifikat LinkedIn dengan nama kompetensi, ID kredensial, & URL verifikasi berlogo SkillBridge terisi otomatis.',
                             buttonText: 'Buka Form LinkedIn (1-Click)',
                             buttonColor: const Color(0xFF0A66C2),
                             onTap: () async {
                               final url = snapshot.data?['add_to_profile_url'] as String? ?? '';
+                              final verifyUrl = snapshot.data?['verify_url'] as String? ?? '';
+                              if (verifyUrl.isNotEmpty) {
+                                Clipboard.setData(ClipboardData(text: verifyUrl));
+                              }
                               if (url.isNotEmpty) {
                                 await launchUrlString(url, mode: LaunchMode.externalApplication);
                               }
                             },
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Option 1B: Logo & Media Sertifikat untuk Form LinkedIn
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0F7FF),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: const Color(0xFFBFDBFE)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Image.network(
+                                        (snapshot.data?['logo_url'] as String?) ??
+                                            'https://forestgreen-mallard-481065.hostingersite.com/images/skillbridge-logo.jpg',
+                                        width: 44,
+                                        height: 44,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, _, _) => Container(
+                                          width: 44,
+                                          height: 44,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF0057FF),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: const Icon(
+                                            Icons.verified_rounded,
+                                            color: Colors.white,
+                                            size: 24,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '🖼️ Logo & Media Sertifikat LinkedIn',
+                                            style: TextStyle(
+                                              color: Color(0xFF0F172A),
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                          SizedBox(height: 2),
+                                          Text(
+                                            'Tempelkan tautan ini di bagian "+ Tambahkan media → Tambahkan tautan" pada form sertifikat LinkedIn agar logo SkillBridge tampil.',
+                                            style: TextStyle(
+                                              color: Color(0xFF475569),
+                                              fontSize: 11.5,
+                                              height: 1.35,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        onPressed: () {
+                                          final mediaUrl = (snapshot.data?['verify_url'] as String?) ??
+                                              'https://forestgreen-mallard-481065.hostingersite.com/verify/${_userData['id'] ?? 1}';
+                                          Clipboard.setData(ClipboardData(text: mediaUrl));
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Tautan Media Berlogo SkillBridge disalin! Tempel di "+ Tambahkan media" LinkedIn.'),
+                                              backgroundColor: Color(0xFF0A66C2),
+                                            ),
+                                          );
+                                        },
+                                        icon: const Icon(Icons.link_rounded, size: 16),
+                                        label: const Text(
+                                          'Salin Tautan Media',
+                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                                        ),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: const Color(0xFF0A66C2),
+                                          side: const BorderSide(color: Color(0xFF93C5FD)),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: FilledButton.icon(
+                                        onPressed: () async {
+                                          final logoUrl = (snapshot.data?['logo_url'] as String?) ??
+                                              'https://forestgreen-mallard-481065.hostingersite.com/images/skillbridge-logo.jpg';
+                                          await launchUrlString(logoUrl, mode: LaunchMode.externalApplication);
+                                        },
+                                        icon: const Icon(Icons.download_rounded, size: 15),
+                                        label: const Text(
+                                          'Unduh Logo',
+                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                                        ),
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: const Color(0xFF0057FF),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 14),
 

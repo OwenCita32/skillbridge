@@ -121,17 +121,28 @@ trait ManagesGithubAndLinkedInPortfolio
         $skills = $analysis['skills'] ?? [];
         $readiness = $this->computeReadiness($skills);
 
-        $certName = urlencode("{$careerTitle} Job-Ready Certification");
-        $orgName = urlencode('SkillBridge');
-        $certUrl = urlencode("https://skillbridge.id/verify/{$user->id}");
-        $portfolioUrl = urlencode("https://skillbridge.id/u/{$user->id}");
+        $baseHost = rtrim(config('app.url', 'https://forestgreen-mallard-481065.hostingersite.com'), '/');
+        if (str_contains($baseHost, 'localhost') || str_contains($baseHost, '127.0.0.1')) {
+            $baseHost = 'https://forestgreen-mallard-481065.hostingersite.com';
+        }
 
-        // 1-Click LinkedIn Add to Profile URL (Standar Resmi LinkedIn)
+        $certTitle = "{$careerTitle} Job-Ready Certification";
+        $certId = 'SKB-2026-JR-' . str_pad((string) $user->id, 4, '0', STR_PAD_LEFT);
+        $verifyUrl = "{$baseHost}/verify/{$user->id}";
+        $logoUrl = "{$baseHost}/images/skillbridge-logo.jpg";
+
+        $certName = urlencode($certTitle);
+        $orgName = urlencode('SkillBridge');
+        $certUrl = urlencode($verifyUrl);
+        $portfolioUrl = urlencode("{$baseHost}/u/{$user->id}");
+
+        // 1-Click LinkedIn Add to Profile URL (Standar Resmi LinkedIn + ID Kredensial & URL Verifikasi Berlogo)
         $addToProfileUrl = "https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME"
             . "&name={$certName}"
             . "&organizationName={$orgName}"
             . "&issueYear=" . date('Y')
             . "&issueMonth=" . date('m')
+            . "&certId=" . urlencode($certId)
             . "&certUrl={$certUrl}";
 
         // 1-Click LinkedIn Share Post URL
@@ -144,13 +155,16 @@ trait ManagesGithubAndLinkedInPortfolio
             . "- Fondasi Teori & Konsep Arsitektur {$careerTitle}\n"
             . "- Penguasaan Alat Kerja Standar Industri & Modern Workflow\n"
             . "- Portofolio Studi Kasus & Proyek Nyata Siap Klien\n\n"
-            . "🔗 Verifikasi Portofolio SkillBridge: https://skillbridge.id/u/{$user->id}\n"
+            . "🔗 Verifikasi Portofolio SkillBridge: {$verifyUrl}\n"
             . "📁 Repositori GitHub: https://github.com/" . ($user->github_username ?? 'rakapratama');
 
         return ApiResponse::success([
             'add_to_profile_url' => $addToProfileUrl,
             'share_post_url' => $sharePostUrl,
-            'cert_name' => "{$careerTitle} Job-Ready Certification",
+            'cert_name' => $certTitle,
+            'cert_id' => $certId,
+            'verify_url' => $verifyUrl,
+            'logo_url' => $logoUrl,
             'formatted_summary' => $summaryText,
             'readiness_score' => $readiness,
         ], 'Link export LinkedIn berhasil disusun.');
