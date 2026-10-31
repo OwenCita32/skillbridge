@@ -94,12 +94,22 @@ class ApiClient {
     return _listValue(await _send('GET', '/resources$query'));
   }
 
-  Future<Map<String, dynamic>> setCareerGoal(int careerId) async {
+  Future<Map<String, dynamic>> setCareerGoal([
+    int? careerId,
+    String? careerTitle,
+  ]) async {
+    final body = <String, dynamic>{};
+    if (careerId != null) {
+      body['career_id'] = careerId;
+    }
+    if (careerTitle != null && careerTitle.trim().isNotEmpty) {
+      body['career_title'] = careerTitle.trim();
+    }
     final response = await _sendMap(
       'POST',
       '/career-goals',
       authenticated: true,
-      body: {'career_id': careerId},
+      body: body,
     );
     return _mapValue(response['career']);
   }
@@ -133,6 +143,155 @@ class ApiClient {
     '/roadmap-items/$itemId/progress',
     authenticated: true,
     body: {'status': status},
+  );
+
+  // Job Tracker
+  Future<Map<String, dynamic>> getJobApplications({String? status}) {
+    final query = (status != null && status != 'Semua') ? '?status=$status' : '';
+    return _sendMap('GET', '/job-applications$query', authenticated: true);
+  }
+
+  Future<Map<String, dynamic>> createJobApplication({
+    required String title,
+    String? clientName,
+    required String platform,
+    String? budget,
+    String? status,
+    String? notes,
+  }) => _sendMap(
+    'POST',
+    '/job-applications',
+    authenticated: true,
+    body: {
+      'title': title,
+      if (clientName != null) 'client_name': clientName,
+      'platform': platform,
+      if (budget != null) 'budget': budget,
+      if (status != null) 'status': status,
+      if (notes != null) 'notes': notes,
+    },
+  );
+
+  Future<Map<String, dynamic>> updateJobApplicationStatus({
+    required int id,
+    required String status,
+  }) => _sendMap(
+    'PATCH',
+    '/job-applications/$id/status',
+    authenticated: true,
+    body: {'status': status},
+  );
+
+  Future<Map<String, dynamic>> deleteJobApplication(int id) =>
+      _sendMap('DELETE', '/job-applications/$id', authenticated: true);
+
+  // Portfolio practice task submission
+  Future<Map<String, dynamic>> submitPortfolioTask({
+    required String title,
+    String? submissionLink,
+    List<String>? checklistCompleted,
+    int? roadmapItemId,
+  }) => _sendMap(
+    'POST',
+    '/portfolio-submissions',
+    authenticated: true,
+    body: {
+      'title': title,
+      if (submissionLink != null) 'submission_link': submissionLink,
+      if (checklistCompleted != null) 'checklist_completed': checklistCompleted,
+      if (roadmapItemId != null) 'roadmap_item_id': roadmapItemId,
+    },
+  );
+
+  // Quiz submission & auto skill-gap update
+  Future<Map<String, dynamic>> submitQuizScore({
+    required int scorePercentage,
+    String? skillName,
+    int? skillId,
+    int? correctCount,
+    int? totalQuestions,
+  }) => _sendMap(
+    'POST',
+    '/quizzes/submit',
+    authenticated: true,
+    body: {
+      'score_percentage': scorePercentage,
+      if (skillName != null) 'skill_name': skillName,
+      if (skillId != null) 'skill_id': skillId,
+      if (correctCount != null) 'correct_count': correctCount,
+      if (totalQuestions != null) 'total_questions': totalQuestions,
+    },
+  );
+
+  Future<Map<String, dynamic>> askAiMentor({
+    required String message,
+    List<Map<String, String>> history = const [],
+  }) => _sendMap(
+    'POST',
+    '/mentor/chat',
+    authenticated: true,
+    body: {
+      'message': message,
+      if (history.isNotEmpty) 'history': history,
+    },
+  );
+
+  // Profile update & integration
+  Future<Map<String, dynamic>> updateProfile({
+    required String name,
+    String? headline,
+    String? bio,
+    String? githubUsername,
+    String? linkedinUrl,
+    String? avatarUrl,
+  }) => _sendMap(
+    'PATCH',
+    '/profile',
+    authenticated: true,
+    body: {
+      'name': name,
+      if (headline != null) 'headline': headline,
+      if (bio != null) 'bio': bio,
+      if (githubUsername != null) 'github_username': githubUsername,
+      if (linkedinUrl != null) 'linkedin_url': linkedinUrl,
+      if (avatarUrl != null) 'avatar_url': avatarUrl,
+    },
+  );
+
+  Future<Map<String, dynamic>> importGithubRepos(String username) => _sendMap(
+    'POST',
+    '/profile/github-import',
+    authenticated: true,
+    body: {'username': username},
+  );
+
+  Future<Map<String, dynamic>> getLinkedInExport() =>
+      _sendMap('GET', '/profile/linkedin-export', authenticated: true);
+
+  Future<Map<String, dynamic>> getCertificates() =>
+      _sendMap('GET', '/profile/certificates', authenticated: true);
+
+  // Forgot password without SMTP / vendor
+  Future<Map<String, dynamic>> requestPasswordReset(String email) => _sendMap(
+    'POST',
+    '/forgot-password',
+    body: {'email': email},
+  );
+
+  Future<Map<String, dynamic>> resetPassword({
+    required String email,
+    required String resetCode,
+    required String password,
+    required String passwordConfirmation,
+  }) => _sendMap(
+    'POST',
+    '/reset-password',
+    body: {
+      'email': email,
+      'reset_code': resetCode,
+      'password': password,
+      'password_confirmation': passwordConfirmation,
+    },
   );
 
   Future<void> _saveToken(dynamic token) async {

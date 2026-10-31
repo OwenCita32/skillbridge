@@ -67,6 +67,8 @@ class _AppShellState extends State<AppShell> {
     }
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      extendBody: true,
       body: switch (_selectedIndex) {
         0 => DashboardScreen(
           key: ValueKey('dashboard-$_refreshKey'),
@@ -86,27 +88,120 @@ class _AppShellState extends State<AppShell> {
           onLogout: widget.onLogout,
         ),
       },
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) =>
-            setState(() => _selectedIndex = index),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
-            label: 'Home',
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          child: Container(
+            height: 70,
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.96),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: const Color(0xFFE2E8F0).withValues(alpha: 0.8),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.08),
+                  blurRadius: 28,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _FloatingNavDestination(
+                    icon: Icons.home_outlined,
+                    selectedIcon: Icons.home_outlined,
+                    label: 'Beranda',
+                    selected: _selectedIndex == 0,
+                    onTap: () => setState(() => _selectedIndex = 0),
+                  ),
+                ),
+                Expanded(
+                  child: _FloatingNavDestination(
+                    icon: Icons.map_outlined,
+                    selectedIcon: Icons.map_outlined,
+                    label: 'Roadmap',
+                    selected: _selectedIndex == 1,
+                    onTap: () => setState(() => _selectedIndex = 1),
+                  ),
+                ),
+                Expanded(
+                  child: _FloatingNavDestination(
+                    icon: Icons.person_outline_rounded,
+                    selectedIcon: Icons.person_outline_rounded,
+                    label: 'Profil',
+                    selected: _selectedIndex == 2,
+                    onTap: () => setState(() => _selectedIndex = 2),
+                  ),
+                ),
+              ],
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.route_outlined),
-            selectedIcon: Icon(Icons.route_rounded),
-            label: 'Roadmap',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person_rounded),
-            label: 'Profil',
-          ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FloatingNavDestination extends StatelessWidget {
+  const _FloatingNavDestination({
+    required this.icon,
+    required this.selectedIcon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF0057FF) : Colors.transparent,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF0057FF).withValues(alpha: 0.28),
+                    blurRadius: 14,
+                    offset: const Offset(0, 5),
+                  ),
+                ]
+              : null,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              selected ? selectedIcon : icon,
+              size: 21,
+              color: selected ? Colors.white : const Color(0xFF64748B),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.white : const Color(0xFF64748B),
+                fontSize: 11,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

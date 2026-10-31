@@ -170,23 +170,47 @@ class SkillGapExplanationService
      */
     private function fallback(array $skillGap): array
     {
-        if ($skillGap['current_level'] === null) {
+        $skillName = (string) ($skillGap['skill']->name ?? 'Skill');
+        $lowerName = strtolower($skillName);
+        $gap = (int) ($skillGap['gap'] ?? 0);
+        $currentLevel = $skillGap['current_level'];
+
+        if ($currentLevel === null) {
             return [
-                'explanation' => 'Skill ini belum dinilai, sehingga kesenjangan kemampuan belum dapat dihitung.',
-                'suggested_next_action' => 'Pilih level self-assessment untuk skill ini.',
+                'explanation' => "Skill {$skillName} belum dinilai secara menyeluruh. Lakukan kuis assessment untuk mendeteksi kesenjangan kemampuanmu.",
+                'suggested_next_action' => "Buka modul kuis untuk mengevaluasi pemahaman dasarmu pada {$skillName}.",
             ];
         }
 
-        if ($skillGap['gap'] > 0) {
+        if ($gap > 0) {
+            if (str_contains($lowerName, 'dasar') || str_contains($lowerName, 'teori') || str_contains($lowerName, 'fundamental')) {
+                return [
+                    'explanation' => "Pemahaman konsep dasar pada {$skillName} masih perlu diperkuat agar memenuhi standar ekspektasi industri freelance.",
+                    'suggested_next_action' => "Tonton modul video konsep inti dan selesaikan kuis pemahaman konsep secara berkala.",
+                ];
+            }
+            if (str_contains($lowerName, 'alat') || str_contains($lowerName, 'tool') || str_contains($lowerName, 'workflow') || str_contains($lowerName, 'alur')) {
+                return [
+                    'explanation' => "Penguasaan alat kerja dan efisiensi workflow masih di bawah standar klien komersial yang butuh eksekusi cepat.",
+                    'suggested_next_action' => "Praktikkan penggunaan shortcut dan integrasi workflow modern di proyek latihanmu.",
+                ];
+            }
+            if (str_contains($lowerName, 'portofolio') || str_contains($lowerName, 'proyek') || str_contains($lowerName, 'portfolio')) {
+                return [
+                    'explanation' => "Koleksi bukti karya komersial pada {$skillName} belum mencerminkan tingkat kesulitan proyek freelance nyata yang kompetitif.",
+                    'suggested_next_action' => "Selesaikan tugas studi kasus portofolio dan lampirkan link live preview hasil karyamu.",
+                ];
+            }
+
             return [
-                'explanation' => 'Penilaian diri saat ini berada di bawah target karier. Gap dihitung backend dari level saat ini dan target, bukan dari AI.',
-                'suggested_next_action' => 'Pelajari materi terkurasi untuk skill ini dan catat hasil latihanmu.',
+                'explanation' => "Kapasitas saat ini pada {$skillName} berada di bawah target pasar dengan selisih yang butuh akselerasi latihan mandiri.",
+                'suggested_next_action' => "Ikuti panduan materi kurasi terarah dan selesaikan tantangan praktik mingguan.",
             ];
         }
 
         return [
-            'explanation' => 'Penilaian diri saat ini sudah mencapai target yang ditentukan pada profil karier demo.',
-            'suggested_next_action' => 'Tinjau kembali penilaian ini setelah mencoba praktik yang lebih menantang.',
+            'explanation' => "Kemampuan pada {$skillName} sudah memenuhi standar minimum yang dicari klien freelance pada kategori ini.",
+            'suggested_next_action' => "Pertahankan kualitas dengan eksplorasi teknik lanjutan dan perbarui portofoliomu secara berkala.",
         ];
     }
 }

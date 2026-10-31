@@ -12,6 +12,128 @@ class SkillBridgeDemoSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->seedUiUxDesigner();
+        $this->seedCybersecurity();
+    }
+
+    private function seedUiUxDesigner(): void
+    {
+        $career = Career::updateOrCreate(
+            ['slug' => 'ui-ux-designer'],
+            [
+                'title' => 'Freelance UI/UX Designer',
+                'summary' => 'Merancang antarmuka aplikasi intuitif, wireframe, prototipe interaktif, dan sistem desain untuk klien.',
+                'description' => 'Jalur ini menyiapkan kemampuan desain visual, prototyping Figma interaktif, dan riset UX praktis untuk kebutuhan proyek freelance.',
+                'is_demo' => true,
+            ],
+        );
+
+        $skillDefinitions = [
+            'visual-design' => ['Visual Design', 'Fondasi tata letak visual, tipografi, warna, dan komponen UI siap pakai.', 'design', 4],
+            'prototyping' => ['Prototyping Interaktif', 'Membuat prototipe alur aplikasi yang bisa diklik dan diuji langsung oleh klien.', 'prototyping', 4],
+            'ux-research' => ['UX Research Praktis', 'Riset kebutuhan pengguna, usability testing sederhana, dan pemetaan alur persona.', 'research', 3],
+            'design-systems' => ['Design System & Tokens', 'Menyusun komponen reusable, token warna/spasi, dan dokumentasi aset.', 'design_systems', 3],
+            'client-pitching' => ['Portofolio & Pitching Klien', 'Menyusun studi kasus portofolio dan proposal penawaran proyek freelance.', 'freelance', 3],
+        ];
+
+        $skills = [];
+        foreach ($skillDefinitions as $slug => [$name, $description, $category, $targetLevel]) {
+            $skills[$slug] = Skill::updateOrCreate(
+                ['slug' => $slug],
+                ['name' => $name, 'description' => $description, 'category' => $category, 'is_demo' => true],
+            );
+
+            CareerSkillRequirement::updateOrCreate(
+                ['career_id' => $career->id, 'skill_id' => $skills[$slug]->id],
+                ['target_level' => $targetLevel],
+            );
+        }
+
+        $resources = [
+            [
+                'skill' => 'visual-design',
+                'title' => 'Figma Learn: Visual Design Foundations',
+                'description' => 'Materi panduan dasar tata letak, warna, dan hierarki visual dalam Figma.',
+                'category' => 'Visual Design',
+                'type' => 'tutorial',
+                'url' => 'https://help.figma.com/hc/en-us/categories/360002042553-Figma-design',
+                'source' => 'Figma Learn',
+            ],
+            [
+                'skill' => 'prototyping',
+                'title' => 'Figma Prototyping Guide',
+                'description' => 'Tutorial resmi membuat smart animate, interaksi komponen, dan transisi layar interaktif.',
+                'category' => 'Prototyping',
+                'type' => 'video',
+                'url' => 'https://help.figma.com/hc/en-us/sections/360006651914-Prototypes',
+                'source' => 'Figma Learn',
+            ],
+            [
+                'skill' => 'ux-research',
+                'title' => 'Practical UX Research Methods',
+                'description' => 'Panduan cepat usability test dan wawancara pengguna untuk validasi ide desain.',
+                'category' => 'UX Research',
+                'type' => 'guide',
+                'url' => 'https://www.nngroup.com/articles/which-ux-research-methods/',
+                'source' => 'Nielsen Norman Group',
+            ],
+            [
+                'skill' => 'design-systems',
+                'title' => 'Building Design Systems in Figma',
+                'description' => 'Praktik terbaik varian komponen, auto layout, dan variabel design token.',
+                'category' => 'Design Systems',
+                'type' => 'tutorial',
+                'url' => 'https://help.figma.com/hc/en-us/articles/360040451373-Create-components-to-reuse-in-designs',
+                'source' => 'Figma Learn',
+            ],
+            [
+                'skill' => 'prototyping',
+                'title' => 'Tonton: Figma Auto Layout',
+                'description' => 'Konsep frame, auto layout, padding, gap, dan membuat tombol & card responsif.',
+                'category' => 'Prototyping',
+                'type' => 'video',
+                'url' => 'https://help.figma.com/hc/en-us/articles/360040451373-Auto-layout',
+                'source' => 'Figma Learn',
+            ],
+            [
+                'skill' => 'client-pitching',
+                'title' => 'Update case study portofolio',
+                'description' => 'Perbarui case study Travel App dengan menambahkan bagian proses riset dan hasil usability test.',
+                'category' => 'Portofolio',
+                'type' => 'praktik',
+                'url' => 'https://skillbridge.test/practice/case-study',
+                'source' => 'SkillBridge Studio',
+            ],
+            [
+                'skill' => 'client-pitching',
+                'title' => 'Baca artikel pricing freelance',
+                'description' => 'Cara Menentukan Harga Jasa Desain Pertamamu dan rumus menghitung rate proyek.',
+                'category' => 'Freelance',
+                'type' => 'bacaan',
+                'url' => 'https://skillbridge.test/articles/freelance-pricing',
+                'source' => 'Freelance Academy',
+            ],
+        ];
+
+        foreach ($resources as $resource) {
+            $skill = $skills[$resource['skill']];
+            unset($resource['skill']);
+
+            LearningResource::updateOrCreate(
+                ['url' => $resource['url']],
+                [
+                    ...$resource,
+                    'skill_id' => $skill->id,
+                    'verified_at' => '2026-10-31',
+                    'is_active' => true,
+                    'is_demo' => true,
+                ],
+            );
+        }
+    }
+
+    private function seedCybersecurity(): void
+    {
         $career = Career::updateOrCreate(
             ['slug' => 'cybersecurity-analyst'],
             [
@@ -50,7 +172,7 @@ class SkillBridgeDemoSeeder extends Seeder
             [
                 'skill' => 'networking-fundamentals',
                 'title' => 'Networking Basics',
-                'description' => 'Kursus mandiri Cisco Networking Academy tentang dasar jaringan, perangkat, media, dan protokol. Pendaftaran mungkin diperlukan.',
+                'description' => 'Kursus mandiri Cisco Networking Academy tentang dasar jaringan, perangkat, media, dan protokol.',
                 'category' => 'Networking',
                 'type' => 'course',
                 'url' => 'https://www.netacad.com/courses/networking-basics/how-routers-work',
@@ -68,7 +190,7 @@ class SkillBridgeDemoSeeder extends Seeder
             [
                 'skill' => 'security-concepts',
                 'title' => 'OWASP Top 10:2025',
-                'description' => 'Dokumen awareness OWASP tentang risiko keamanan aplikasi web yang umum; materi pengantar, bukan daftar lengkap keamanan.',
+                'description' => 'Dokumen awareness OWASP tentang risiko keamanan aplikasi web yang umum.',
                 'category' => 'Security concepts',
                 'type' => 'reference',
                 'url' => 'https://top10.owasp.org/',
@@ -77,7 +199,7 @@ class SkillBridgeDemoSeeder extends Seeder
             [
                 'skill' => 'log-analysis-siem',
                 'title' => 'Free Splunk training courses',
-                'description' => 'Katalog pelatihan resmi yang mencakup kursus pengantar Splunk, event, pencarian, dan dashboard. Akses kursus dapat meminta pendaftaran.',
+                'description' => 'Katalog pelatihan resmi yang mencakup kursus pengantar Splunk, event, pencarian, dan dashboard.',
                 'category' => 'SIEM and log analysis',
                 'type' => 'course_catalog',
                 'url' => 'https://www.splunk.com/en_us/training/free-courses/overview.html',
@@ -86,7 +208,7 @@ class SkillBridgeDemoSeeder extends Seeder
             [
                 'skill' => 'alert-triage',
                 'title' => 'Navigate, triage, and manage Microsoft Sentinel incidents',
-                'description' => 'Panduan resmi untuk memfilter insiden, menilai severity, menetapkan owner, dan mengelola triage. Akses portal memerlukan akun dan peran yang sesuai.',
+                'description' => 'Panduan resmi untuk memfilter insiden, menilai severity, menetapkan owner, dan mengelola triage.',
                 'category' => 'Incident response',
                 'type' => 'guide',
                 'url' => 'https://learn.microsoft.com/en-us/azure/sentinel/incident-navigate-triage',
@@ -95,7 +217,7 @@ class SkillBridgeDemoSeeder extends Seeder
             [
                 'skill' => 'basic-scripting',
                 'title' => 'The Python Tutorial',
-                'description' => 'Tutorial resmi Python untuk mempelajari dasar bahasa dan menulis program kecil; mengasumsikan pembaca sudah mengenal pemrograman dasar.',
+                'description' => 'Tutorial resmi Python untuk mempelajari dasar bahasa dan menulis program kecil.',
                 'category' => 'Scripting',
                 'type' => 'tutorial',
                 'url' => 'https://docs.python.org/3/tutorial/',

@@ -4,6 +4,7 @@ return [
 
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),
+        'api_key_2' => env('OPENAI_API_KEY_2'),
         'base_url' => rtrim(env('OPENAI_BASE_URL', 'https://api.openai.com/v1'), '/'),
         'model' => env('OPENAI_MODEL', 'gpt-6-luna'),
         'enabled' => env('OPENAI_ENABLED', true),

@@ -13,7 +13,17 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable([
+    'name',
+    'email',
+    'password',
+    'headline',
+    'github_username',
+    'github_repos',
+    'linkedin_url',
+    'bio',
+    'avatar_url',
+])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -40,6 +50,16 @@ class User extends Authenticatable
         return $this->hasMany(ProgressRecord::class);
     }
 
+    public function jobApplications(): HasMany
+    {
+        return $this->hasMany(JobApplication::class);
+    }
+
+    public function portfolioSubmissions(): HasMany
+    {
+        return $this->hasMany(PortfolioSubmission::class);
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -50,6 +70,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'github_repos' => 'array',
         ];
     }
 }

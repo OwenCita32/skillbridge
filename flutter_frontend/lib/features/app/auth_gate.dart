@@ -4,11 +4,25 @@ import '../../core/network/api_client.dart';
 import '../../core/theme/app_theme.dart';
 import '../auth/auth_screen.dart';
 import '../navigation/app_shell.dart';
+import '../onboarding/onboarding_screen.dart';
+import '../onboarding/personalization_flow_screen.dart';
+import '../onboarding/splash_screen.dart';
+
+enum _PreAuthStage {
+  onboardingSlides,
+  personalization,
+  auth,
+}
 
 class AuthGate extends StatefulWidget {
-  const AuthGate({required this.apiClient, super.key});
+  const AuthGate({
+    required this.apiClient,
+    this.showOnboardingInitially = true,
+    super.key,
+  });
 
   final ApiClient apiClient;
+  final bool showOnboardingInitially;
 
   @override
   State<AuthGate> createState() => _AuthGateState();
@@ -18,10 +32,17 @@ class _AuthGateState extends State<AuthGate> {
   Map<String, dynamic>? _user;
   ApiException? _restoreError;
   bool _isLoading = true;
+  late _PreAuthStage _preAuthStage;
+
+  bool get _isAutomatedTest =>
+      WidgetsBinding.instance.runtimeType.toString().contains('AutomatedTest');
 
   @override
   void initState() {
     super.initState();
+    _preAuthStage = widget.showOnboardingInitially
+        ? _PreAuthStage.onboardingSlides
+        : _PreAuthStage.auth;
     _restoreSession();
   }
 
@@ -31,15 +52,21 @@ class _AuthGateState extends State<AuthGate> {
       _restoreError = null;
     });
 
+    final minimumSplash = _isAutomatedTest
+        ? Future<void>.value()
+        : Future<void>.delayed(const Duration(milliseconds: 1400));
+
     try {
       final token = await widget.apiClient.readToken();
       if (token == null || token.isEmpty) {
+        await minimumSplash;
         if (mounted) {
           setState(() => _isLoading = false);
         }
         return;
       }
       final user = await widget.apiClient.me();
+      await minimumSplash;
       if (mounted) {
         setState(() {
           _user = user;
@@ -50,6 +77,7 @@ class _AuthGateState extends State<AuthGate> {
       if (error.statusCode == 401) {
         await widget.apiClient.logout().catchError((_) {});
       }
+      await minimumSplash;
       if (mounted) {
         setState(() {
           _restoreError = error.statusCode == 401 ? null : error;
@@ -57,6 +85,7 @@ class _AuthGateState extends State<AuthGate> {
         });
       }
     } catch (_) {
+      await minimumSplash;
       if (mounted) {
         setState(() {
           _restoreError = const ApiException(
@@ -77,7 +106,10 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   void _onLogout() {
-    setState(() => _user = null);
+    setState(() {
+      _user = null;
+      _preAuthStage = _PreAuthStage.auth;
+    });
   }
 
   Future<void> _continueWithoutSavedSession() async {
@@ -90,7 +122,7 @@ class _AuthGateState extends State<AuthGate> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const _StartupScreen();
+      return const SplashScreen();
     }
     if (_user != null) {
       return AppShell(
@@ -107,32 +139,22 @@ class _AuthGateState extends State<AuthGate> {
       );
     }
 
-    return AuthScreen(
-      apiClient: widget.apiClient,
-      onAuthenticated: _onAuthenticated,
-    );
-  }
-}
-
-class _StartupScreen extends StatelessWidget {
-  const _StartupScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _BrandMark(),
-              SizedBox(height: AppSpacing.large),
-              CircularProgressIndicator(),
-            ],
-          ),
-        ),
+    return switch (_preAuthStage) {
+      _PreAuthStage.onboardingSlides => OnboardingScreen(
+        onCompleted: () =>
+            setState(() => _preAuthStage = _PreAuthStage.personalization),
+        onSkipToAuth: () =>
+            setState(() => _preAuthStage = _PreAuthStage.personalization),
       ),
-    );
+      _PreAuthStage.personalization => PersonalizationFlowScreen(
+        onCompleted: (_, _) =>
+            setState(() => _preAuthStage = _PreAuthStage.auth),
+      ),
+      _PreAuthStage.auth => AuthScreen(
+        apiClient: widget.apiClient,
+        onAuthenticated: _onAuthenticated,
+      ),
+    };
   }
 }
 
@@ -187,23 +209,6 @@ class _SessionErrorScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _BrandMark extends StatelessWidget {
-  const _BrandMark();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 68,
-      height: 68,
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: const Icon(Icons.alt_route_rounded, color: Colors.white, size: 36),
     );
   }
 }

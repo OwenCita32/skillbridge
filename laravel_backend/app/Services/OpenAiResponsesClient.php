@@ -5,19 +5,44 @@ namespace App\Services;
 use App\Exceptions\OpenAiResponseException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use JsonException;
 
 class OpenAiResponsesClient
 {
-    /** @return array{response_id: string, model: string, text: string} */
-    public function connectionProbe(): array
+    private static int $roundRobinCounter = 0;
+
+    /** @return list<string> */
+    public function apiKeys(): array
     {
-        $response = $this->send([
+        $keys = [];
+
+        $key1 = config('services.openai.api_key');
+        if (is_string($key1) && trim($key1) !== '') {
+            $keys[] = trim($key1);
+        }
+
+        $key2 = config('services.openai.api_key_2');
+        if (is_string($key2) && trim($key2) !== '') {
+            $keys[] = trim($key2);
+        }
+
+        return array_values(array_unique($keys));
+    }
+
+    /** @return array{response_id: string, model: string, text: string} */
+    public function connectionProbe(?string $apiKey = null): array
+    {
+        $payload = [
             'model' => $this->model(),
             'input' => 'Reply with the single word OK.',
             'max_output_tokens' => 16,
             'store' => false,
-        ]);
+        ];
+
+        $response = $apiKey !== null
+            ? $this->sendWithKey($apiKey, $payload)
+            : $this->send($payload);
 
         return [
             'response_id' => (string) ($response['id'] ?? ''),
@@ -78,7 +103,18 @@ class OpenAiResponsesClient
     {
         $model = (string) config('services.openai.model', 'gpt-6-luna');
 
-        if ($model !== 'gpt-6-luna') {
+        $allowed = [
+            'gpt-6-luna',
+            'gpt-4o',
+            'gpt-4o-mini',
+            'gpt-4-turbo',
+            'gpt-4',
+            'gpt-3.5-turbo',
+            'o1-mini',
+            'o1-preview',
+        ];
+
+        if (! in_array($model, $allowed, true)) {
             throw new OpenAiResponseException('unsupported_model');
         }
 
@@ -95,11 +131,51 @@ class OpenAiResponsesClient
             throw new OpenAiResponseException('disabled');
         }
 
-        $apiKey = config('services.openai.api_key');
-        if (! is_string($apiKey) || trim($apiKey) === '') {
+        $keys = $this->apiKeys();
+        if ($keys === []) {
             throw new OpenAiResponseException('missing_api_key');
         }
 
+        $keyCount = count($keys);
+        $startIndex = self::$roundRobinCounter % $keyCount;
+        self::$roundRobinCounter++;
+
+        $orderedKeys = [];
+        for ($i = 0; $i < $keyCount; $i++) {
+            $orderedKeys[] = $keys[($startIndex + $i) % $keyCount];
+        }
+
+        $lastException = null;
+
+        foreach ($orderedKeys as $idx => $apiKey) {
+            try {
+                return $this->sendWithKey($apiKey, $payload);
+            } catch (OpenAiResponseException $exception) {
+                $lastException = $exception;
+
+                if (in_array($exception->category, ['invalid_api_key', 'rate_limit', 'timeout', 'transport_error'], true)) {
+                    Log::warning('OpenAI request failed on current key. Attempting next key if available.', [
+                        'key_attempt' => $idx + 1,
+                        'total_keys' => $keyCount,
+                        'category' => $exception->category,
+                        'status' => $exception->httpStatus,
+                    ]);
+                    continue;
+                }
+
+                throw $exception;
+            }
+        }
+
+        throw $lastException ?? new OpenAiResponseException('missing_api_key');
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function sendWithKey(string $apiKey, array $payload): array
+    {
         try {
             $response = Http::acceptJson()
                 ->asJson()

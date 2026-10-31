@@ -18,6 +18,12 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
+            'headline' => $this->headline,
+            'github_username' => $this->github_username,
+            'github_repos' => $this->github_repos,
+            'linkedin_url' => $this->linkedin_url,
+            'bio' => $this->bio,
+            'avatar_url' => $this->avatar_url,
             'career_goal' => $this->whenLoaded('careerGoal', fn (): ?array => $this->careerGoal === null
                 ? null
                 : [

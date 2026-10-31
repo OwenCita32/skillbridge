@@ -36,13 +36,48 @@ class RoadmapController extends Controller
         );
     }
 
-    public function current(Request $request): JsonResponse
+    public function current(Request $request, RoadmapGenerator $generator): JsonResponse
     {
-        $roadmap = $request->user()->roadmaps()
+        $user = $request->user();
+        $roadmap = $user->roadmaps()
             ->where('is_current', true)
             ->with(['career', 'items.skill', 'items.resources', 'items.currentProgressRecord'])
             ->orderByDesc('id')
             ->first();
+
+        if ($roadmap === null) {
+            $goal = $user->careerGoal()->with('career.skillRequirements')->first();
+
+            // Auto-assign default UI/UX Designer career if none selected
+            if (!$goal) {
+                $career = \App\Models\Career::where('slug', 'ui-ux-designer')->first();
+                if ($career) {
+                    $goal = $user->careerGoal()->create(['career_id' => $career->id]);
+                    $goal->load('career.skillRequirements');
+                }
+            }
+
+            if ($goal) {
+                // Ensure initial assessment exists
+                if (!$user->assessments()->where('career_id', $goal->career_id)->exists()) {
+                    $assessment = $user->assessments()->create([
+                        'career_id' => $goal->career_id,
+                        'submitted_at' => now(),
+                    ]);
+                    foreach ($goal->career->skillRequirements as $req) {
+                        $assessment->skillAssessments()->create([
+                            'skill_id' => $req->skill_id,
+                            'level' => max(1, min(2, $req->target_level - 1)),
+                        ]);
+                    }
+                }
+
+                $roadmap = $generator->generate($user);
+                if ($roadmap) {
+                    $roadmap->load(['career', 'items.skill', 'items.resources', 'items.currentProgressRecord']);
+                }
+            }
+        }
 
         if ($roadmap === null) {
             return ApiResponse::error('ROADMAP_NOT_FOUND', 'Belum ada roadmap untuk target karier ini.', 404);

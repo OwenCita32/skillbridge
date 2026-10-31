@@ -14,27 +14,46 @@ class TestOpenAiConnection extends Command
 {
     public function handle(OpenAiResponsesClient $client): int
     {
-        try {
-            $result = $client->connectionProbe();
-        } catch (OpenAiResponseException $exception) {
-            $status = $exception->httpStatus === null ? '' : ' http_status='.$exception->httpStatus;
-            $this->error('FAIL OpenAI Responses API category='.$exception->category.$status);
+        $keys = $client->apiKeys();
+
+        if (empty($keys)) {
+            $this->error('FAIL OpenAI Responses API category=missing_api_key');
 
             return self::FAILURE;
         }
 
-        if (strtoupper(trim($result['text'])) !== 'OK') {
-            $this->error('FAIL OpenAI Responses API returned an unexpected probe response.');
+        $allPassed = true;
 
-            return self::FAILURE;
+        foreach ($keys as $index => $apiKey) {
+            $keyNumber = $index + 1;
+            $maskedKey = strlen($apiKey) > 12
+                ? substr($apiKey, 0, 7).'...'.substr($apiKey, -4)
+                : '***';
+
+            try {
+                $result = $client->connectionProbe($apiKey);
+
+                if (strtoupper(trim($result['text'])) !== 'OK') {
+                    $this->error("FAIL Key #{$keyNumber} ({$maskedKey}): Unexpected probe response.");
+                    $allPassed = false;
+
+                    continue;
+                }
+
+                $this->info(sprintf(
+                    'PASS Key #%d (%s) model=%s response_id_received=%s',
+                    $keyNumber,
+                    $maskedKey,
+                    config('services.openai.model'),
+                    $result['response_id'] === '' ? 'no' : 'yes',
+                ));
+            } catch (OpenAiResponseException $exception) {
+                $status = $exception->httpStatus === null ? '' : ' http_status='.$exception->httpStatus;
+                $this->error("FAIL Key #{$keyNumber} ({$maskedKey}): category={$exception->category}{$status}");
+                $allPassed = false;
+            }
         }
 
-        $this->info(sprintf(
-            'PASS OpenAI Responses API model=%s response_id_received=%s',
-            config('services.openai.model'),
-            $result['response_id'] === '' ? 'no' : 'yes',
-        ));
-
-        return self::SUCCESS;
+        return $allPassed ? self::SUCCESS : self::FAILURE;
     }
 }

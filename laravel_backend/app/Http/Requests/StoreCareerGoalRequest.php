@@ -23,7 +23,8 @@ class StoreCareerGoalRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'career_id' => ['required', 'integer', 'exists:careers,id'],
+            'career_id' => ['required_without:career_title', 'nullable', 'integer', 'exists:careers,id'],
+            'career_title' => ['required_without:career_id', 'nullable', 'string', 'min:2', 'max:100'],
         ];
     }
 
@@ -31,8 +32,11 @@ class StoreCareerGoalRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'career_id.required' => 'Pilih target karier.',
+            'career_id.required_without' => 'Pilih dari daftar atau ketik target karier impianmu.',
+            'career_title.required_without' => 'Pilih dari daftar atau ketik target karier impianmu.',
             'career_id.exists' => 'Karier yang dipilih tidak tersedia.',
+            'career_title.min' => 'Nama target karier minimal 2 karakter.',
+            'career_title.max' => 'Nama target karier maksimal 100 karakter.',
         ];
     }
 }
