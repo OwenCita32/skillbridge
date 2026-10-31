@@ -1,4 +1,4 @@
-﻿part of '../profile_screen.dart';
+part of '../profile_screen.dart';
 
 extension _ProfileCertificatesModal on _ProfileScreenState {
   // 6. SERTIFIKAT MODAL (Daftar Sertifikat & Asal-Usul 2 Jalur)
@@ -365,7 +365,10 @@ extension _ProfileCertificatesModal on _ProfileScreenState {
                                   child: FilledButton.icon(
                                     onPressed: () {
                                       Navigator.of(sheetContext).pop();
-                                      _showLinkedInExportSheet();
+                                      _showLinkedInExportSheet(
+                                        initialCertName: title,
+                                        initialCertId: 'N9ZO6K870XG5',
+                                      );
                                     },
                                     icon: const Icon(Icons.add_task_rounded, size: 14),
                                     label: const Text('Ke LinkedIn', style: TextStyle(fontSize: 11.5)),

@@ -119,7 +119,45 @@ extension _ProfilePortfolioModals on _ProfileScreenState {
   }
 
   // 4. LINKEDIN EXPORT MODAL
-  void _showLinkedInExportSheet() async {
+  void _showLinkedInExportSheet({
+    String? initialCertName,
+    String? initialCertId,
+  }) async {
+    int selectedIssuerIdx = 0;
+    final certUrlController = TextEditingController(
+      text: 'https://www.dicoding.com/certificates/N9ZO6K870XG5',
+    );
+    final certCodeController = TextEditingController(
+      text: initialCertId ?? 'N9ZO6K870XG5',
+    );
+
+    const issuers = <Map<String, String>>[
+      {
+        'name': 'Dicoding Indonesia',
+        'orgId': '11287043',
+        'defaultCode': 'N9ZO6K870XG5',
+        'baseUrl': 'https://www.dicoding.com/certificates/',
+      },
+      {
+        'name': 'Coursera',
+        'orgId': '2453129',
+        'defaultCode': '9Z8X7C6V5B4N',
+        'baseUrl': 'https://www.coursera.org/account/accomplishments/verify/',
+      },
+      {
+        'name': 'Google',
+        'orgId': '1441',
+        'defaultCode': 'GGL-2026-CERT',
+        'baseUrl': 'https://www.dicoding.com/certificates/',
+      },
+      {
+        'name': 'freeCodeCamp',
+        'orgId': '4831032',
+        'defaultCode': 'FCC-2026-WEB',
+        'baseUrl': 'https://www.freecodecamp.org/certification/',
+      },
+    ];
+
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -129,7 +167,7 @@ extension _ProfilePortfolioModals on _ProfileScreenState {
           future: widget.apiClient.getLinkedInExport(),
           builder: (context, snapshot) {
             return Container(
-              height: MediaQuery.of(context).size.height * 0.85,
+              height: MediaQuery.of(context).size.height * 0.88,
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
               decoration: const BoxDecoration(
                 color: Colors.white,
@@ -174,7 +212,7 @@ extension _ProfilePortfolioModals on _ProfileScreenState {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Export ke LinkedIn',
+                              'Export Sertifikat ke LinkedIn',
                               style: TextStyle(
                                 color: Color(0xFF0F172A),
                                 fontSize: 17,
@@ -182,7 +220,7 @@ extension _ProfilePortfolioModals on _ProfileScreenState {
                               ),
                             ),
                             Text(
-                              'Integrasi resmi 1-Click tanpa pihak ketiga vendor',
+                              'Logo penerbit otomatis muncul & langsung ke halaman sertifikat',
                               style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
                             ),
                           ],
@@ -213,61 +251,48 @@ extension _ProfilePortfolioModals on _ProfileScreenState {
                       ),
                     )
                   else ...[
-                    Builder(
-                      builder: (context) {
-                        final githubUser = (_userData['github_username'] as String?)?.trim().isNotEmpty == true
-                            ? (_userData['github_username'] as String).trim()
-                            : 'arya27Q';
+                    StatefulBuilder(
+                      builder: (context, setModalState) {
                         final careerGoal = _userData['career_goal'] as Map?;
                         final careerMap = careerGoal?['career'] as Map?;
                         final careerTitle = (careerMap?['title'] as String?) ??
                             (snapshot.data?['cert_name'] as String?)?.replaceAll(' Job-Ready Certification', '') ??
                             'Web Developer';
-                        final certName = '$careerTitle Job-Ready Certification';
-                        final userId = _userData['id'] ?? 1;
-                        final certId = (snapshot.data?['cert_id'] as String?) ??
-                            'SKB-2026-JR-${userId.toString().padLeft(4, '0')}';
+                        final certName = (initialCertName != null && initialCertName.trim().isNotEmpty)
+                            ? initialCertName.trim()
+                            : 'Belajar Fundamental $careerTitle';
 
-                        // Gunakan URL GitHub Portofolio aktif agar pratinjau link di LinkedIn & "Lihat Kredensial" 100% berhasil (HTTP 200 + OpenGraph)
-                        final livePortfolioUrl = _importedRepos.isNotEmpty &&
-                                (_importedRepos.first['html_url'] as String?)?.isNotEmpty == true
-                            ? (_importedRepos.first['html_url'] as String)
-                            : 'https://github.com/$githubUser';
+                        final currentIssuer = issuers[selectedIssuerIdx];
+                        final orgName = currentIssuer['name']!;
+                        final orgId = currentIssuer['orgId']!;
+                        final certCode = certCodeController.text.trim().isNotEmpty
+                            ? certCodeController.text.trim()
+                            : currentIssuer['defaultCode']!;
+                        final certVerifyUrl = certUrlController.text.trim().isNotEmpty
+                            ? certUrlController.text.trim()
+                            : '${currentIssuer['baseUrl']}$certCode';
 
                         final now = DateTime.now();
+                        // Menggunakan organizationId resmi LinkedIn (mis. Dicoding 11287043)
+                        // agar LOGO otomatis muncul di LinkedIn tanpa perlu Upload Media,
+                        // dan certUrl langsung mengarah ke halaman Sertifikat (bukan GitHub).
                         final cleanLinkedInAddUrl =
                             'https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME'
                             '&name=${Uri.encodeComponent(certName)}'
-                            '&organizationName=${Uri.encodeComponent('SkillBridge')}'
+                            '&organizationId=$orgId'
+                            '&organizationName=${Uri.encodeComponent(orgName)}'
                             '&issueYear=${now.year}'
                             '&issueMonth=${now.month}'
-                            '&certId=${Uri.encodeComponent(certId)}'
-                            '&certUrl=${Uri.encodeComponent(livePortfolioUrl)}';
+                            '&certId=${Uri.encodeComponent(certCode)}'
+                            '&certUrl=${Uri.encodeComponent(certVerifyUrl)}';
 
                         final cleanShareUrl =
-                            'https://www.linkedin.com/sharing/share-offsite/?url=${Uri.encodeComponent(livePortfolioUrl)}';
+                            'https://www.linkedin.com/sharing/share-offsite/?url=${Uri.encodeComponent(certVerifyUrl)}';
 
                         return Expanded(
                           child: ListView(
                             children: [
-                              // Option 1: 1-Click Add Certificate to LinkedIn
-                              _buildExportOptionCard(
-                                title: '🏅 Tambah Lisensi ke Profil LinkedIn',
-                                subtitle:
-                                    'Membuka form sertifikat LinkedIn dengan nama kompetensi, ID kredensial ($certId), & URL portofolio aktif terisi otomatis.',
-                                buttonText: 'Buka Form LinkedIn (1-Click)',
-                                buttonColor: const Color(0xFF0A66C2),
-                                onTap: () async {
-                                  Clipboard.setData(ClipboardData(text: livePortfolioUrl));
-                                  await launchUrlString(
-                                    cleanLinkedInAddUrl,
-                                    mode: LaunchMode.externalApplication,
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 14),
-
-                              // Option 1B: Logo & Media Sertifikat untuk Form LinkedIn
+                              // Konfigurasi Penerbit Resmi & Link Sertifikat Eksternal (Dicoding, Coursera, dll.)
                               Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
@@ -278,108 +303,200 @@ extension _ProfilePortfolioModals on _ProfileScreenState {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
+                                    const Row(
                                       children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(10),
-                                          child: Image.asset(
-                                            'assets/images/skillbridge_logo.jpg',
-                                            width: 48,
-                                            height: 48,
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        const Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                '🖼️ Logo & Media Sertifikat LinkedIn',
-                                                style: TextStyle(
-                                                  color: Color(0xFF0F172A),
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w800,
-                                                ),
-                                              ),
-                                              SizedBox(height: 2),
-                                              Text(
-                                                'Untuk bagian "+ Tambahkan media" di LinkedIn: salin tautan portofolio aktif di bawah, atau buka Kartu Sertifikat berlogo untuk diunggah.',
-                                                style: TextStyle(
-                                                  color: Color(0xFF475569),
-                                                  fontSize: 11.5,
-                                                  height: 1.35,
-                                                ),
-                                              ),
-                                            ],
+                                        Icon(Icons.verified_rounded, color: Color(0xFF0A66C2), size: 20),
+                                        SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            'Penerbit Sertifikat Resmi (Logo Otomatis di LinkedIn)',
+                                            style: TextStyle(
+                                              color: Color(0xFF0F172A),
+                                              fontSize: 13.5,
+                                              fontWeight: FontWeight.w800,
+                                            ),
                                           ),
                                         ),
                                       ],
                                     ),
+                                    const SizedBox(height: 4),
+                                    const Text(
+                                      'Pilih penerbit resmi (seperti Dicoding) agar logo asli langsung tampil otomatis di profil LinkedIn tanpa perlu upload media manual:',
+                                      style: TextStyle(
+                                        color: Color(0xFF475569),
+                                        fontSize: 11.5,
+                                        height: 1.35,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: List.generate(issuers.length, (idx) {
+                                        final item = issuers[idx];
+                                        final isSelected = selectedIssuerIdx == idx;
+                                        return ChoiceChip(
+                                          label: Text(
+                                            item['name']!,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                              color: isSelected ? Colors.white : const Color(0xFF1E293B),
+                                            ),
+                                          ),
+                                          selected: isSelected,
+                                          selectedColor: const Color(0xFF0A66C2),
+                                          backgroundColor: Colors.white,
+                                          onSelected: (_) {
+                                            setModalState(() {
+                                              selectedIssuerIdx = idx;
+                                              final code = item['defaultCode']!;
+                                              certCodeController.text = code;
+                                              certUrlController.text = '${item['baseUrl']}$code';
+                                            });
+                                          },
+                                        );
+                                      }),
+                                    ),
                                     const SizedBox(height: 12),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: OutlinedButton.icon(
-                                            onPressed: () {
-                                              Clipboard.setData(ClipboardData(text: livePortfolioUrl));
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                    'Tautan Media ($livePortfolioUrl) disalin! Tempel di "+ Tambahkan media → Tambahkan tautan" LinkedIn.',
-                                                  ),
-                                                  backgroundColor: const Color(0xFF0A66C2),
-                                                ),
-                                              );
-                                            },
-                                            icon: const Icon(Icons.link_rounded, size: 16),
-                                            label: const Text(
-                                              'Salin Link Media',
-                                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-                                            ),
-                                            style: OutlinedButton.styleFrom(
-                                              foregroundColor: const Color(0xFF0A66C2),
-                                              side: const BorderSide(color: Color(0xFF93C5FD)),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(10),
-                                              ),
-                                            ),
-                                          ),
+                                    TextField(
+                                      controller: certCodeController,
+                                      onChanged: (val) {
+                                        setModalState(() {
+                                          final cleanCode = val.trim();
+                                          if (cleanCode.isNotEmpty &&
+                                              certUrlController.text.startsWith(currentIssuer['baseUrl']!)) {
+                                            certUrlController.text = '${currentIssuer['baseUrl']}$cleanCode';
+                                          }
+                                        });
+                                      },
+                                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+                                      decoration: InputDecoration(
+                                        labelText: 'ID Kredensial Sertifikat (Contoh: N9ZO6K870XG5)',
+                                        labelStyle: const TextStyle(fontSize: 12),
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        isDense: true,
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
                                         ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: FilledButton.icon(
-                                            onPressed: () {
-                                              _showCertificateCardPreviewDialog(
-                                                certName: certName,
-                                                certId: certId,
-                                              );
-                                            },
-                                            icon: const Icon(Icons.workspace_premium_rounded, size: 15),
-                                            label: const Text(
-                                              'Kartu & Logo',
-                                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-                                            ),
-                                            style: FilledButton.styleFrom(
-                                              backgroundColor: const Color(0xFF0057FF),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(10),
-                                              ),
-                                            ),
-                                          ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    TextField(
+                                      controller: certUrlController,
+                                      onChanged: (_) => setModalState(() {}),
+                                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                                      decoration: InputDecoration(
+                                        labelText: 'URL Kredensial Sertifikat (Langsung ke Sertifikat, Bukan GitHub)',
+                                        labelStyle: const TextStyle(fontSize: 12),
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        isDense: true,
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
                                         ),
-                                      ],
+                                        suffixIcon: IconButton(
+                                          tooltip: 'Buka Sertifikat',
+                                          icon: const Icon(Icons.open_in_new_rounded, size: 18, color: Color(0xFF0A66C2)),
+                                          onPressed: () {
+                                            launchUrlString(
+                                              certVerifyUrl,
+                                              mode: LaunchMode.externalApplication,
+                                            );
+                                          },
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
                               const SizedBox(height: 14),
 
-                              // Option 2: Share Achievement Post to Feed
+                              // Option 1: 1-Click Add Certificate to LinkedIn (Logo Otomatis + Langsung ke Sertifikat)
                               _buildExportOptionCard(
-                                title: '📢 Bagikan Portofolio ke Feed LinkedIn',
+                                title: '🏅 Tambah Sertifikat ke LinkedIn (Logo Otomatis)',
                                 subtitle:
-                                    'Posting skor kesiapan kerja dan link verifikasi karya ke linimasa profesionalmu.',
+                                    'Membuka form Lisensi & Sertifikasi LinkedIn dengan penerbit resmi $orgName (Logo otomatis tampil tanpa upload media) & tombol "Lihat Kredensial" langsung mengarah ke sertifikat ($certVerifyUrl).',
+                                buttonText: 'Buka Form LinkedIn (1-Click)',
+                                buttonColor: const Color(0xFF0A66C2),
+                                onTap: () async {
+                                  await launchUrlString(
+                                    cleanLinkedInAddUrl,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 14),
+
+                              // Option 1B: Preview Halaman Sertifikat & Kartu Kredensial
+                              Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        onPressed: () {
+                                          launchUrlString(
+                                            certVerifyUrl,
+                                            mode: LaunchMode.externalApplication,
+                                          );
+                                        },
+                                        icon: const Icon(Icons.verified_user_outlined, size: 16),
+                                        label: const Text(
+                                          'Cek Link Sertifikat',
+                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                                        ),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: const Color(0xFF0A66C2),
+                                          side: const BorderSide(color: Color(0xFF93C5FD)),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: FilledButton.icon(
+                                        onPressed: () {
+                                          _showCertificateCardPreviewDialog(
+                                            certName: certName,
+                                            certId: certCode,
+                                          );
+                                        },
+                                        icon: const Icon(Icons.workspace_premium_rounded, size: 15),
+                                        label: const Text(
+                                          'Lihat Kartu Sertifikat',
+                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                                        ),
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: const Color(0xFF0057FF),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+
+                              // Option 2: Share Certificate Post to Feed
+                              _buildExportOptionCard(
+                                title: '📢 Bagikan Sertifikat ke Feed LinkedIn',
+                                subtitle:
+                                    'Posting pencapaian sertifikat kompetensi dan link verifikasi sertifikat ke linimasa LinkedIn-mu.',
                                 buttonText: 'Bagikan Postingan',
                                 buttonColor: const Color(0xFF0057FF),
                                 onTap: () async {
@@ -395,14 +512,14 @@ extension _ProfilePortfolioModals on _ProfileScreenState {
                               _buildExportOptionCard(
                                 title: '📋 Salin Ringkasan Format LinkedIn',
                                 subtitle:
-                                    'Teks siap pakai untuk bagian "About" atau "Projects" di akun LinkedIn-mu.',
+                                    'Teks siap pakai untuk bagian "About" atau "Licenses & Certifications" di akun LinkedIn-mu.',
                                 buttonText: 'Salin Teks ke Clipboard',
                                 buttonColor: const Color(0xFF334155),
                                 onTap: () {
                                   final rawText = snapshot.data?['formatted_summary'] as String? ?? '';
                                   final text = rawText.replaceAll(
                                     RegExp(r'https://skillbridge\.id/u/\d+'),
-                                    livePortfolioUrl,
+                                    certVerifyUrl,
                                   );
                                   Clipboard.setData(ClipboardData(text: text));
                                   ScaffoldMessenger.of(context).showSnackBar(

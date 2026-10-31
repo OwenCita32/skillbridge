@@ -126,19 +126,21 @@ trait ManagesGithubAndLinkedInPortfolio
             $baseHost = 'https://forestgreen-mallard-481065.hostingersite.com';
         }
 
-        $certTitle = "{$careerTitle} Job-Ready Certification";
-        $certId = 'SKB-2026-JR-' . str_pad((string) $user->id, 4, '0', STR_PAD_LEFT);
-        $verifyUrl = "{$baseHost}/verify/{$user->id}";
+        $certTitle = "Belajar Fundamental {$careerTitle}";
+        $certId = 'N9ZO6K870XG5';
+        $verifyUrl = "https://www.dicoding.com/certificates/{$certId}";
         $logoUrl = "{$baseHost}/images/skillbridge-logo.jpg";
 
         $certName = urlencode($certTitle);
-        $orgName = urlencode('SkillBridge');
+        $orgId = '11287043'; // Official LinkedIn Organization ID for Dicoding Indonesia (Auto-displays official logo)
+        $orgName = urlencode('Dicoding Indonesia');
         $certUrl = urlencode($verifyUrl);
-        $portfolioUrl = urlencode("{$baseHost}/u/{$user->id}");
+        $portfolioUrl = urlencode($verifyUrl);
 
-        // 1-Click LinkedIn Add to Profile URL (Standar Resmi LinkedIn + ID Kredensial & URL Verifikasi Berlogo)
+        // 1-Click LinkedIn Add to Profile URL (Dengan organizationId resmi agar logo otomatis muncul tanpa upload media)
         $addToProfileUrl = "https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME"
             . "&name={$certName}"
+            . "&organizationId={$orgId}"
             . "&organizationName={$orgName}"
             . "&issueYear=" . date('Y')
             . "&issueMonth=" . date('m')
