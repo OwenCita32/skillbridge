@@ -24,7 +24,7 @@ class SkillBridgeLogoMark extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: backgroundColor,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: elevated
             ? [
@@ -36,83 +36,14 @@ class SkillBridgeLogoMark extends StatelessWidget {
               ]
             : null,
       ),
-      child: Center(
-        child: SizedBox(
-          width: size * 0.56,
-          height: size * 0.42,
-          child: CustomPaint(
-            painter: _BridgeIconPainter(color: iconColor),
-          ),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: EdgeInsets.all(size * 0.08),
+        child: Image.asset(
+          'assets/images/skillbridge_logo.jpg',
+          fit: BoxFit.contain,
         ),
       ),
     );
   }
 }
-
-class _BridgeIconPainter extends CustomPainter {
-  const _BridgeIconPainter({required this.color});
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final strokeWidth = size.width * 0.11;
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final baseLineY = size.height * 0.84;
-
-    // Arch from left base to right base
-    final archPath = Path()
-      ..moveTo(size.width * 0.08, baseLineY)
-      ..quadraticBezierTo(
-        size.width * 0.50,
-        -size.height * 0.22,
-        size.width * 0.92,
-        baseLineY,
-      );
-    canvas.drawPath(archPath, paint);
-
-    // Base horizontal deck
-    canvas.drawLine(
-      Offset(size.width * 0.05, baseLineY),
-      Offset(size.width * 0.95, baseLineY),
-      paint,
-    );
-
-    // Vertical suspension pillars inside the arch
-    final pillarPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth * 0.82
-      ..strokeCap = StrokeCap.round;
-
-    // Left pillar
-    canvas.drawLine(
-      Offset(size.width * 0.33, size.height * 0.44),
-      Offset(size.width * 0.33, baseLineY),
-      pillarPaint,
-    );
-    // Center tallest pillar
-    canvas.drawLine(
-      Offset(size.width * 0.50, size.height * 0.26),
-      Offset(size.width * 0.50, baseLineY),
-      pillarPaint,
-    );
-    // Right pillar
-    canvas.drawLine(
-      Offset(size.width * 0.67, size.height * 0.44),
-      Offset(size.width * 0.67, baseLineY),
-      pillarPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _BridgeIconPainter oldDelegate) =>
-      oldDelegate.color != color;
-}
-
