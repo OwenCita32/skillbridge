@@ -94,6 +94,21 @@ extension _RoadmapScreenLogic on _RoadmapScreenState {
     }
   }
 
+  void _searchAiLearningResources(String stageTitle, String careerTitle) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return _AiLearningResourcesSheet(
+          apiClient: widget.apiClient,
+          stageTitle: stageTitle,
+          careerTitle: careerTitle,
+        );
+      },
+    );
+  }
+
   List<_StageViewModel> _buildStages(List<Map<String, dynamic>> backendItems) {
     const defaultStages = _RoadmapScreenState._defaultStages;
     if (backendItems.isEmpty) {

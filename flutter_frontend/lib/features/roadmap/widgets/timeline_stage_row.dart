@@ -10,6 +10,7 @@ class _TimelineStageRow extends StatelessWidget {
     required this.onContinueLearning,
     required this.onUpdateStatus,
     required this.onOpenResource,
+    this.onSearchAiResources,
   });
 
   final _StageViewModel stage;
@@ -20,6 +21,7 @@ class _TimelineStageRow extends StatelessWidget {
   final VoidCallback onContinueLearning;
   final ValueChanged<String>? onUpdateStatus;
   final ValueChanged<Map<String, dynamic>> onOpenResource;
+  final VoidCallback? onSearchAiResources;
 
   static const _brandBlue = Color(0xFF0057FF);
 
@@ -247,6 +249,36 @@ class _TimelineStageRow extends StatelessWidget {
                             ),
                           ],
                         ),
+                        if (onSearchAiResources != null) ...[
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: onSearchAiResources,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF0057FF),
+                                side: const BorderSide(color: Color(0xFFBFDBFE)),
+                                backgroundColor: const Color(0xFFF8FAFC),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                              ),
+                              icon: const Icon(
+                                Icons.auto_awesome_rounded,
+                                size: 16,
+                                color: Color(0xFF0057FF),
+                              ),
+                              label: const Text(
+                                '✨ Cari Referensi Belajar Terkini dengan AI',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                         if (stage.backendItem != null &&
                             onUpdateStatus != null) ...[
                           const SizedBox(height: 12),

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/network/api_client.dart';
@@ -10,6 +10,7 @@ import 'video_lesson_screen.dart';
 part 'models/roadmap_stage_models.dart';
 part 'controllers/roadmap_controller.dart';
 part 'widgets/timeline_stage_row.dart';
+part 'widgets/ai_learning_resources_sheet.dart';
 
 class RoadmapScreen extends StatefulWidget {
   const RoadmapScreen({
@@ -255,6 +256,10 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
                           )
                       : null,
                   onOpenResource: _openResource,
+                  onSearchAiResources: () => _searchAiLearningResources(
+                    stage.title,
+                    displayTitle,
+                  ),
                 );
               }),
 
